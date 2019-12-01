@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t akihr/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true akihr/react-test npm test
+
+after_success:
+  - docker build -t akihr/multi-client ./client
+  - docker build -t akihr/multi-nginx ./nginx
+  - docker build -t akihr/multi-server ./server
+  - docker build -t akihr/multi-worker ./worker
+  # Log in to the Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push akihr/multi-client
+  - docker push akihr/multi-nginx
+  - docker push akihr/multi-server
+  - docker push akihr/multi-worker
